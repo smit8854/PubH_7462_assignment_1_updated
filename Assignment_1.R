@@ -1,16 +1,45 @@
 # Prep Workspace ----------------------------------------------------------
 library(tidyverse)
+library(ggridges)
 
 rm(list = ls())
 
+#change the working directory to find the data
+setwd("../../_PhD/1_Spring_21/Data_Viz_7462/raw_data/")
+
 #load the csv file
-framingham <- read.csv(file = "./raw_data/framingham.csv", header = TRUE)
+framingham <- read.csv(file = "framingham.csv", header = TRUE)
 
 # get some basic info about the data
 names(framingham)
 summary(framingham)
 head(framingham)
 
+
+# UPDATE: ASSIGNMENT 2 ----------------------------------------------------
+# create a new analysis that looks at sex differences for diabetes and shock index
+
+# create a separate DF to calculate shockIndex and recode the Diabetes variable
+sex_SI <- framingham %>% 
+  filter(!is.na(heartRate)) %>% 
+  mutate(shockIndex = heartRate/sysBP,
+         diabetes.fct = factor(diabetes),
+         diabetes.fct = fct_recode(diabetes.fct, "Diabetic" = "1", "Non-Diabetic" = "0"))
+
+# now plot the shock index for men and women who are non-dibaetic and diabetic
+ggplot(sex_SI) +
+  aes(x = shockIndex , y = diabetes.fct, fill = diabetes.fct) +
+  ggridges::geom_density_ridges(alpha = 0.4, scale = 0.75, rel_min_height = 0.001, 
+                                jittered_points = TRUE, position = position_raincloud(width = 0.05, height = 0.05)) +
+  scale_x_continuous(limits = c(0,1.25), breaks = c(0, 0.3, 0.6, 0.9, 1.2)) +
+  geom_vline(xintercept = 0.9, linetype = "dashed", size = 1) +
+  facet_wrap(~gender) +
+  labs(x = "Shock Index", y = "Diabetes Status", 
+       title = "Shock Index for Men and Women with and without Diabetes from Framingham, Massachusetts",
+       subtitle = "Data collected as part of The Framingham Heart Study beginning in 1948",
+       caption = "Shock Index is calculated as an individuals heartrate / blood pressure") +
+  guides(fill = FALSE) +
+  theme_bw() + theme(plot.caption = element_text(face = "italic", hjust = 0))
 
 # Task #1 -----------------------------------------------------------------
 # How does the shock index differ for different cholesterol levels in women?
